@@ -165,6 +165,10 @@ private:
   // returns the matching template and the MSE
   void compare(double &vt_err, unsigned int &vt_match_id);
 
+  /** compare a view and depth template pair against all the stored template pairs,
+   * allowing for slen pixel shifts in each direction
+   * return the matching template pair and the MSE
+   */
   void compare_super_templates(double &vt_err, unsigned int &vt_match_id);
 
   int VT_SHIFT_MATCH;
@@ -191,8 +195,8 @@ private:
   std::vector<double> current_relative_depth;
 
   /** entropy related variables */
-  double current_vt_entropy;
-  double current_dt_entropy;
+  double current_view_entropy;
+  double current_depth_entropy;
 
   int image_size;
   int current_vt;

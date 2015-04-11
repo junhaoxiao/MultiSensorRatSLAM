@@ -437,6 +437,11 @@ namespace ratslam
     return templates.size() - 1;
   }
 
+  void LocalViewMatch::compare_super_templates(double &vt_err, unsigned int &vt_match_id)
+  {
+
+  }
+
   // compare a visual template to all the stored templates, allowing for
   // slen pixel shifts in each direction
   // returns the matching template and the MSE
