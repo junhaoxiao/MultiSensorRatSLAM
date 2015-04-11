@@ -439,7 +439,12 @@ namespace ratslam
 
   void LocalViewMatch::compare_super_templates(double &vt_err, unsigned int &vt_match_id)
   {
-
+    if (templates.size() == 0)
+    {
+      vt_err = DBL_MAX;
+      vt_error = vt_err;
+      return;
+    }
   }
 
   // compare a visual template to all the stored templates, allowing for
