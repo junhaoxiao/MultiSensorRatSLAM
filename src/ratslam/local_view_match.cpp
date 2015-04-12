@@ -445,6 +445,8 @@ namespace ratslam
       vt_error = vt_err;
       return;
     }
+
+    double *data = &current_view[0];
   }
 
   // compare a visual template to all the stored templates, allowing for
