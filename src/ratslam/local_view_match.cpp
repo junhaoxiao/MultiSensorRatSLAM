@@ -447,6 +447,7 @@ namespace ratslam
     }
 
     double *data = &current_view[0];
+    test the origin master.
   }
 
   // compare a visual template to all the stored templates, allowing for
