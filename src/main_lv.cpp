@@ -62,7 +62,7 @@ void image_callback(sensor_msgs::ImageConstPtr image, ros::Publisher * pub_vt)
 
   static ratslam_ros::ViewTemplate vt_output;
 
-  lv->on_image(&image->data[0], (image->encoding == "bgr8" ? false : true), image->width, image->height);
+  //lv->on_image(&image->data[0], (image->encoding == "bgr8" ? false : true), image->width, image->height);
 
   vt_output.header.stamp = ros::Time::now();
   vt_output.header.seq++;
@@ -78,6 +78,30 @@ void image_callback(sensor_msgs::ImageConstPtr image, ros::Publisher * pub_vt)
   }
 #endif
 }
+
+void depth_callback(sensor_msgs::ImageConstPtr image, ros::Publisher * pub_vt)
+{
+  ROS_DEBUG_STREAM("LV:depth_image_callback{" << ros::Time::now() << "} seq=" << image->header.seq);
+
+  static ratslam_ros::ViewTemplate vt_output;
+
+  //lv->on_depth(&image->data[0], (image->encoding == "bgr8" ? false : true), image->width, image->height);
+
+  vt_output.header.stamp = ros::Time::now();
+  vt_output.header.seq++;
+  vt_output.current_id = lv->get_current_vt();
+  vt_output.relative_rad = lv->get_relative_rad();
+
+  pub_vt->publish(vt_output);
+
+#ifdef HAVE_IRRLICHT
+  if (use_graphics)
+  {
+    lvs->draw_all();
+  }
+#endif
+}
+
 
 int main(int argc, char * argv[])
 {
@@ -109,8 +133,8 @@ int main(int argc, char * argv[])
   ros::Publisher pub_vt = node.advertise<ratslam_ros::ViewTemplate>(topic_root + "/LocalView/Template", 0);
 
   image_transport::ImageTransport it(node);
-  image_transport::Subscriber sub = it.subscribe(topic_root + "/camera/image", 0, boost::bind(image_callback, _1, &pub_vt));
-
+  image_transport::Subscriber image_sub = it.subscribe(topic_root + "/camera/rgb/image_color", 0, boost::bind(image_callback, _1, &pub_vt));
+  image_transport::Subscriber depth_sub = it.subscribe(topic_root + "/camera/depth_registered/image_raw", 0,boost::bind(depth_callback, _1, &pub_vt));
 
 #ifdef HAVE_IRRLICHT
     boost::property_tree::ptree draw_settings;

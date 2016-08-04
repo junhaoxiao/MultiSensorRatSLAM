@@ -55,16 +55,41 @@ using boost::property_tree::ptree;
 namespace ratslam
 {
 
+/** @brief 用于记录泛视模板，包括id, vt, rt **/
+struct SuperTemplate
+{
+    unsigned int id;
+    VisualTemplate vt;
+    RangeTemplate rt;
+};
+
+/** @brief 用于记录深度模板的数据，包括id，data，以及mean，均值用于提高模板匹配的效率，如果发现均值差别较大，直接跳过 **/
+struct RangeTemplate
+{
+    std::vector<double> data;
+    double mean;
+    double entropy;
+
+    template<typename Archive>
+    void serialize(Archive& ar, const unsigned int version)
+    {
+        ar & data;
+        ar & mean;
+    }
+};
+
+/** @brief 用于记录视觉模板的数据，包括id，data，以及mean，均值用于提高模板匹配的效率，如果发现均值差别较大，直接跳过 **/
 struct VisualTemplate
 {
-  unsigned int id;
+  //unsigned int id;
   std::vector<double> data;
   double mean;
+  double entropy;
 
   template<typename Archive>
     void serialize(Archive& ar, const unsigned int version)
     {
-      ar & id;
+//      ar & id;
       ar & data;
       ar & mean;
     }
@@ -80,9 +105,11 @@ public:
 
   ~LocalViewMatch();
 
-  void on_image(const unsigned char *view_rgb, bool greyscale, unsigned int image_width, unsigned int image_height);
+  /** @brief 用于响应新的传感器数据，目前包括灰度图通道和深度信息通道，后面可以加入激光雷达数据 **/
+  void on_new_data(const unsigned char *img_grey, unsigned int img_grey_width, unsigned int img_grey_height,
+                   const unsigned char *img_range,unsigned int img_range_width, unsigned int img_range_height);
 
-  void on_depth(const unsigned char *depth, unsigned int depth_width, unsigned int depth_height);
+  void on_image(const unsigned char *view_rgb, bool greyscale, unsigned int image_width, unsigned int image_height);
 
   int get_current_vt()
   {
@@ -113,7 +140,7 @@ public:
       ar & VT_MIN_PATCH_NORMALISATION_STD;
       ar & VT_NORMALISATION;
       ar & VT_PANORAMIC;
-
+ /** @todo 需要根据泛视模板修改**/
       ar & templates;
       ar & current_view;
       ar & current_vt_mean;
@@ -138,7 +165,18 @@ private:
   // create and add a visual template to the collection
   int create_template();
 
+  /** @brief 创建泛视模板 **/
   int create_super_template();
+
+  /** @brief 设置当前泛视模板的id，并保存当前泛视模板的id至prev_st **/
+  void set_current_st(int id)
+  {
+      if (current_st != id)
+          prev_st = current_st;
+
+      current_st = id;
+
+  }
 
   void set_current_vt(int id)
   {
@@ -148,17 +186,17 @@ private:
     current_vt = id;
   }
 
-  /** calculate entropy of rgb/grey image view template */
-  void calculate_view_entropy();
+  /** calculate entropy of grey image */
+  void calculate_img_grey_entropy();
 
-  /** convert rgb/grey image to view template */
+  /** convert grey image to view template */
   void convert_view_to_view_template(bool grayscale);
 
-  /** convert depth image to view template */
-  void convert_depth_to_depth_template();
+  /** convert range image to range image template */
+  void convert_range_to_range_template();
 
-  /** calculate depth view template entropy */
-  void calculate_depth_entropy();
+  /** calculate range image entropy */
+  void calculate_img_range_entropy();
 
   // compare a visual template to all the stored templates, allowing for
   // slen pixel shifts in each direction
@@ -171,9 +209,13 @@ private:
    */
   void compare_super_templates(double &vt_err, unsigned int &vt_match_id);
 
+  /** 模板匹配过程中的两个重要参数，VT和ST可能会使用同一组参数 **/
   int VT_SHIFT_MATCH;
   int VT_STEP_MATCH;
+  int ST_SHIFT_MATCH;
+  int ST_STEP_MATCH;
 
+  double ST_MATCH_THRESHOLD;
   double VT_MATCH_THRESHOLD;
   int TEMPLATE_SIZE;
   int IMAGE_WIDTH;
@@ -199,10 +241,18 @@ private:
   double current_depth_entropy;
 
   int image_size;
+  /** 当前泛视模板的id **/
+  int current_st;
   int current_vt;
+  /** 当前vt和st的均值 **/
   double current_vt_mean;
-  double current_dt_mean;
+  double current_rt_mean;
+  /** 两个vt, rt, st之间的差，注意：st_error不是vt_error和rt_error的相加 **/
   double vt_error;
+  double rt_error;
+  double st_error;
+  /** 用于保存前一个泛视模板的id **/
+  int prev_st;
   int prev_vt;
   double vt_relative_rad;
 

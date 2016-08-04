@@ -24,6 +24,7 @@ add_message_files(
    TopologicalMap.msg
    TopologicalNode.msg
    ViewTemplate.msg
+   DepthTemplate.msg
 )
 
 ## Generate actions in the 'msg' folder
